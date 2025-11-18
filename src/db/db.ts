@@ -1,8 +1,17 @@
-// src/db/db.ts
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
-import * as schema from "./schema";
 
-const sql = neon(process.env.DATABASE_URL!);
+export interface Env {
+  DATABASE_URL: string;
+}
 
-export const db = drizzle(sql, { schema });
+let _db: ReturnType<typeof drizzle> | null = null;
+
+export const getDB = (env: Env) => {
+  if (_db) return _db;
+
+  const sql = neon(env.DATABASE_URL);
+  _db = drizzle(sql);
+
+  return _db;
+};
