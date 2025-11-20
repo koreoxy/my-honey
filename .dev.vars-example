@@ -1,1 +1,6 @@
 DATABASE_URL="skdslakdlsad"
+
+
+BETTER_AUTH_SECRET=asdasd
+BETTER_AUTH_URL=http://localhost:5000
+CLIENT_URL=http://localhost:5000

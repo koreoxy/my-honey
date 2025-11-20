@@ -1,36 +1,28 @@
 import { Hono } from "hono";
-import { createAuth } from "./lib/auth";
-import { getTodos } from "./db/queries";
-
-type Bindings = {
-  DATABASE_URL: string;
-  CLIENT_URL: string;
-};
+import { auth, initAuth } from "./lib/auth";
+import { todos } from "./routes/todo.routes";
+import { Bindings } from "./types";
+import { hc } from "hono/client";
 
 const app = new Hono<{ Bindings: Bindings }>();
 
-// Instance auth per-request sesuai dokumentasi baru
-const getAuth = (c: any) =>
-  createAuth({
+// Init auth sekali di startup / per request env
+app.use("*", async (c, next) => {
+  initAuth({
     DATABASE_URL: c.env.DATABASE_URL,
     CLIENT_URL: c.env.CLIENT_URL,
   });
+  await next();
+});
 
 // Auth route (built-in)
 app.on(["GET", "POST"], "/api/auth/*", (c) => {
-  const auth = getAuth(c);
-  return auth.handler(c.req.raw);
+  return auth().handler(c.req.raw);
 });
 
-// Test endpoint
-app.get("/api/todos", async (c) => {
-  try {
-    const todos = await getTodos(c.env);
-    return c.json(todos);
-  } catch (error) {
-    console.error("Failed to fetch todos : ", error);
-    return c.json({ error: "Failed to fetch todos" }, 500);
-  }
-});
+app.route("/api/todos", todos);
+
+export type AppType = typeof app;
+export const client = hc<AppType>("/");
 
 export default app;

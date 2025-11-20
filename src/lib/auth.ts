@@ -10,28 +10,31 @@ export interface Env {
   CLIENT_URL: string;
 }
 
-export const createAuth = (env: Env) => {
-  // Neon Serverless HTTP driver
-  const sql = neon(env.DATABASE_URL);
+// Kita akan menyimpan instance auth di sini
+let authInstance: ReturnType<typeof betterAuth> | null = null;
 
-  // Drizzle instance
+// Fungsi init (dipanggil sekali)
+export const initAuth = (env: Env) => {
+  if (authInstance) return authInstance;
+
+  const sql = neon(env.DATABASE_URL);
   const db = drizzle(sql, { schema });
 
-  // Better Auth instance
-  return betterAuth({
-    runtime: "cf", // wajib untuk Cloudflare Worker
-
+  authInstance = betterAuth({
+    runtime: "cf",
     database: drizzleAdapter(db, {
       provider: "pg",
       schema,
     }),
-
     emailAndPassword: {
       enabled: true,
     },
-
-    // gunakan env cloudflare, bukan process.env
     trustedOrigins: [env.CLIENT_URL],
     plugins: [openAPI()],
   });
+
+  return authInstance;
 };
+
+// Export instance auth untuk seluruh aplikasi
+export const auth = () => authInstance!;

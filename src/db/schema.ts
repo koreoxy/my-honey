@@ -10,15 +10,11 @@ import {
   timestamp,
 } from "drizzle-orm/pg-core";
 
-export const products = pgTable("products", {
-  id: serial("id").primaryKey(),
-  name: text("name"),
-  description: text("description"),
-  price: doublePrecision("price"),
-});
-
 export const todos = pgTable("todos", {
   id: uuid().primaryKey().defaultRandom(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
   title: varchar({ length: 500 }).notNull(),
   description: varchar({ length: 100 }),
   completed: boolean().default(false),
